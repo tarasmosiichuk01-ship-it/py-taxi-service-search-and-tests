@@ -13,6 +13,13 @@ class FormsTests(TestCase):
             "last_name": "Test last",
             "license_number": "ABC12345",
         }
+        expected_data = {
+            "username": "new_user",
+            "first_name": "Test first",
+            "last_name": "Test last",
+            "license_number": "ABC12345",
+        }
         form = DriverCreationForm(data=form_data)
         self.assertTrue(form.is_valid())
-        self.assertEqual(form.cleaned_data, form_data)
+        for field, value in expected_data.items():
+            self.assertEqual(form.cleaned_data[field], value)

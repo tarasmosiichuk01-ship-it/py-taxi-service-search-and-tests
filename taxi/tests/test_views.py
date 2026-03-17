@@ -2,7 +2,7 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
 
-from taxi.models import Manufacturer
+from taxi.models import Manufacturer, Car
 
 MANUFACTURER_URL = reverse("taxi:manufacturer-list")
 
@@ -99,4 +99,86 @@ class DriverSearchTest(TestCase):
         self.assertEqual(
             len(res.context["driver_list"]),
             len(get_user_model().objects.all())
+        )
+
+
+class CarSearchTest(TestCase):
+    def setUp(self):
+        self.user = get_user_model().objects.create_user(
+            username="Nick",
+            password="user123",
+            license_number="SSD12345",
+        )
+        self.client.force_login(self.user)
+        self.manufacturer = Manufacturer.objects.create(
+            name="Toyota",
+            country="Japan"
+        )
+        self.car1 = Car.objects.create(
+            model="Camry",
+            manufacturer=self.manufacturer,
+        )
+        self.car2 = Car.objects.create(
+            model="Corolla",
+            manufacturer=self.manufacturer,
+        )
+
+    def test_search_finds_correct_car(self):
+        res = self.client.get(
+            reverse("taxi:car-list"),
+            data={"model": self.car1.model}
+        )
+        self.assertContains(res, self.car1.model)
+
+    def test_search_excludes_other_cars(self):
+        res = self.client.get(
+            reverse("taxi:car-list"),
+            data={"model": self.car1.model}
+        )
+        self.assertNotContains(res, self.car2.model)
+
+    def test_empty_search_returns_all(self):
+        res = self.client.get(reverse("taxi:car-list"))
+        self.assertEqual(
+            len(res.context["car_list"]),
+            len(Car.objects.all())
+        )
+
+
+class ManufacturerSearchTest(TestCase):
+    def setUp(self):
+        self.user = get_user_model().objects.create_user(
+            username="John",
+            password="user123",
+            license_number="EEW12345",
+        )
+        self.client.force_login(self.user)
+        self.manufacturer1 = Manufacturer.objects.create(
+            name="Tesla",
+            country="USA"
+        )
+        self.manufacturer2 = Manufacturer.objects.create(
+            name="Toyota",
+            country="Japan"
+        )
+
+    def test_search_finds_correct_manufacturer(self):
+        res = self.client.get(
+            reverse("taxi:manufacturer-list"),
+            data={"name": self.manufacturer1.name}
+        )
+        self.assertContains(res, self.manufacturer1.name)
+
+    def test_search_excludes_other_manufacturers(self):
+        res = self.client.get(
+            reverse("taxi:manufacturer-list"),
+            data={"name": self.manufacturer1.name}
+        )
+        self.assertNotContains(res, self.manufacturer2.name)
+
+    def test_empty_search_returns_all(self):
+        res = self.client.get(reverse("taxi:manufacturer-list"))
+        self.assertEqual(
+            len(res.context["manufacturer_list"]),
+            len(Manufacturer.objects.all())
         )

@@ -11,7 +11,7 @@ class AdminSiteTests(TestCase):
             password="testadmin"
         )
         self.client.force_login(self.admin_user)
-        self.driver = get_user_model().objects.create(
+        self.driver = get_user_model().objects.create_user(
             username="driver",
             password="testdriver",
             license_number="Testlicense"
@@ -20,7 +20,7 @@ class AdminSiteTests(TestCase):
     def test_driver_license_number(self):
         """
         Test that driver's license number is in list_display on driver
-        detail admin page
+        change list
         :return:
         """
         url = reverse("admin:taxi_driver_changelist")
